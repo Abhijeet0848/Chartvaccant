@@ -14,7 +14,9 @@ export default function VacancyDashboard({
   searchParams,
   trackingCharts,
   onToggleTrackChart,
-  pnrProfile
+  pnrProfile,
+  onFetchSingleVacancy,
+  onBookSeat
 }) {
   const [activeBerthFilter, setActiveBerthFilter] = useState('ALL');
   const [expandedTrain, setExpandedTrain] = useState(null); // Train number that has coach map open
@@ -28,7 +30,7 @@ export default function VacancyDashboard({
       <div className="card-glass empty-state" style={{ minHeight: '350px' }}>
         <Eye size={48} className="empty-icon" />
         <div className="empty-title">Select Trains to Compare</div>
-        <p>Choose one or more trains from the sidebar to display their chart vacancies simultaneously.</p>
+        <p>Choose one or more trains from the departures schedule above to display their chart vacancies simultaneously.</p>
       </div>
     );
   }
@@ -152,30 +154,47 @@ export default function VacancyDashboard({
       )}
 
       {/* Unified Filters & Sorting Bar */}
-      <div className="filter-bar">
-        {/* Class selector */}
-        <div className="filter-section">
-          <span className="filter-title">
-            <Layers size={14} style={{ marginRight: '4px' }} /> Travel Class:
-          </span>
-          <div className="filter-pills">
-            {allAvailableClasses.map(cls => (
-              <button
-                key={cls}
-                type="button"
-                className={`filter-pill ${selectedClass === cls ? 'active' : ''}`}
-                onClick={() => setSelectedClass(cls)}
-              >
-                {cls === 'SL' ? 'Sleeper (SL)' : cls}
-              </button>
-            ))}
+      {/* Class Selector Card (replicating the screenshot) */}
+      <div className="class-selector-card">
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', width: '100%' }}>
+          <div style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--text-primary)' }}>
+            Second Chart Current Vacant Berth Status at {searchParams.date} 18:40 Hrs.
+          </div>
+          <div className="class-selector-buttons">
+            {allAvailableClasses.map(cls => {
+              const fullLabel = cls === '1A' ? 'FIRST AC (1A)' 
+                              : cls === '2A' ? 'SECOND AC (2A)' 
+                              : cls === '3A' ? 'THIRD AC (3A)' 
+                              : cls === '3E' ? 'AC 3 ECONOMY (3E)' 
+                              : cls === 'SL' ? 'SLEEPER CLASS (SL)' 
+                              : cls === 'CC' ? 'CHAIR CAR (CC)' 
+                              : cls === 'EC' ? 'EXEC. CHAIR CAR (EC)' 
+                              : cls;
+              return (
+                <button
+                  key={cls}
+                  type="button"
+                  className={`class-selector-btn ${selectedClass === cls ? 'active' : ''}`}
+                  onClick={() => setSelectedClass(cls)}
+                >
+                  {fullLabel}
+                </button>
+              );
+            })}
           </div>
         </div>
+      </div>
 
-        {/* Berth types selector */}
+      {/* Disclaimer block matching the screenshot */}
+      <div className="disclaimer-card">
+        * TTE on train can book ticket till {searchParams.to || 'station'}. Online booking is available from {searchParams.to || 'station'} onwards.
+      </div>
+
+      {/* Filter Bar (Berth Type & Sort) */}
+      <div className="filter-bar" style={{ background: '#ffffff', color: 'var(--text-primary)', boxShadow: 'var(--shadow-sm)' }}>
         <div className="filter-section">
           <span className="filter-title">
-            <SlidersHorizontal size={14} style={{ marginRight: '4px' }} /> Berth Type:
+            <SlidersHorizontal size={14} /> Berth Type:
           </span>
           <div className="filter-pills">
             {berthTypes.map(type => (
@@ -191,10 +210,9 @@ export default function VacancyDashboard({
           </div>
         </div>
 
-        {/* Sorting selector */}
-        <div className="filter-section" style={{ borderTop: '1px dashed rgba(255, 255, 255, 0.05)', paddingTop: '0.75rem' }}>
+        <div className="filter-section" style={{ borderTop: '1px solid #dee2e6', paddingTop: '0.75rem' }}>
           <span className="filter-title">
-            <ArrowUpDown size={14} style={{ marginRight: '4px' }} /> Sort Trains:
+            <ArrowUpDown size={14} /> Sort Trains:
           </span>
           <div className="filter-pills">
             <button
@@ -216,14 +234,14 @@ export default function VacancyDashboard({
       </div>
 
       {/* Unified Stats Card */}
-      <div className="card-glass" style={{ padding: '1.25rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+      <div className="search-card" style={{ padding: '1rem 1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', marginBottom: 0 }}>
         <div>
-          <span className="route-text">Boarding Route</span>
-          <div style={{ fontSize: '1.25rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+          <span className="route-text" style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', fontWeight: 600 }}>Active Route Details</span>
+          <div style={{ fontSize: '1.15rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
             <span>{searchParams.from}</span>
-            <span style={{ color: 'var(--text-muted)' }}>→</span>
+            <span style={{ color: 'var(--text-secondary)' }}>➔</span>
             <span>{searchParams.to}</span>
-            <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginLeft: '0.5rem', fontWeight: 400 }}>
+            <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginLeft: '0.5rem', fontWeight: 500 }}>
               on {searchParams.date}
             </span>
           </div>
@@ -231,14 +249,14 @@ export default function VacancyDashboard({
 
         <div style={{ display: 'flex', gap: '1.5rem' }}>
           <div style={{ textAlign: 'right' }}>
-            <span className="route-text">Compared Trains</span>
-            <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--accent-secondary)' }}>
+            <span className="route-text" style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', fontWeight: 600 }}>Compared Trains</span>
+            <div style={{ fontSize: '1.35rem', fontWeight: 700, color: 'var(--accent-primary)' }}>
               {selectedTrains.length}
             </div>
           </div>
           <div style={{ textAlign: 'right' }}>
-            <span className="route-text">Matching Vacancies</span>
-            <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--color-vacant)' }}>
+            <span className="route-text" style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', fontWeight: 600 }}>Matching Vacancies</span>
+            <div style={{ fontSize: '1.35rem', fontWeight: 700, color: 'var(--color-vacant)' }}>
               {loadingVacancy ? '...' : allFilteredBerths.length}
             </div>
           </div>
@@ -290,11 +308,56 @@ export default function VacancyDashboard({
                 <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', flexWrap: 'wrap' }}>
                   
                   {/* Chart check & notifier */}
-                  {trainVacancy && trainVacancy.error ? (
+                  {!trainVacancy ? (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      {isLoading ? (
+                        <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontStyle: 'italic' }}>
+                          Loading Chart...
+                        </span>
+                      ) : (
+                        <button
+                          type="button"
+                          className="btn-primary"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onFetchSingleVacancy(train.number);
+                          }}
+                          style={{
+                            padding: '0.35rem 0.75rem',
+                            fontSize: '0.8rem',
+                            height: '32px',
+                            background: '#003399',
+                            color: '#ffffff',
+                            border: 'none',
+                            borderRadius: '4px',
+                            cursor: 'pointer',
+                            fontWeight: 'bold',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '0.25rem'
+                          }}
+                        >
+                          <Train size={12} />
+                          <span>Get Chart</span>
+                        </button>
+                      )}
+                    </div>
+                  ) : trainVacancy && trainVacancy.error ? (
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                       <span style={{ fontSize: '0.8rem', color: 'var(--color-error)', fontWeight: 600, background: 'rgba(239, 68, 68, 0.1)', padding: '0.2rem 0.5rem', borderRadius: '4px' }}>
                         API ERROR: {trainVacancy.error}
                       </span>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onFetchSingleVacancy(train.number);
+                        }}
+                        className="btn-secondary"
+                        style={{ padding: '0.25rem 0.6rem', fontSize: '0.75rem', height: '28px', marginLeft: '0.5rem' }}
+                      >
+                        Retry
+                      </button>
                     </div>
                   ) : trainVacancy && !isChartPrepared ? (
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
@@ -340,8 +403,8 @@ export default function VacancyDashboard({
 
                   {/* Warning/Source Badge */}
                   {trainVacancy && !trainVacancy.error && (
-                    <span className="badge-source live">
-                      Live IRCTC
+                    <span className={`badge-source ${trainVacancy.source === 'live' ? 'live' : 'mock'}`}>
+                      {trainVacancy.source === 'live' ? 'Live IRCTC' : 'Simulated'}
                     </span>
                   )}
 
@@ -366,13 +429,33 @@ export default function VacancyDashboard({
                       <div className="coach-tabs">
                         {vacancyData.coaches.map(c => {
                           const coachVacancies = vacancyData.vacantBerths.filter(b => b.coach === c.name && (activeBerthFilter === 'ALL' || b.berthType === activeBerthFilter));
+                          const totalCapacity = c.capacity || 72;
+                          const vacantCount = coachVacancies.length;
+                          const vacantPct = Math.min(100, Math.round((vacantCount / totalCapacity) * 100));
+                          
+                          let progressColorClass = 'low';
+                          if (vacantPct > 15) progressColorClass = 'high';
+                          else if (vacantPct > 5) progressColorClass = 'medium';
+
                           return (
                             <div
                               key={c.name}
                               className={`coach-tab ${activeCoachName === c.name ? 'active' : ''}`}
                               onClick={() => handleCoachSelect(c.name)}
+                              style={{ padding: '0.5rem 0.75rem', minWidth: '130px' }}
                             >
-                              {c.name} ({coachVacancies.length} vacant)
+                              <div style={{ display: 'flex', justifyContent: 'space-between', gap: '0.5rem', width: '100%', fontSize: '0.8rem', fontWeight: 600 }}>
+                                <span>{c.name}</span>
+                                <span style={{ color: progressColorClass === 'high' ? 'var(--color-vacant)' : (progressColorClass === 'medium' ? 'var(--color-warning)' : 'var(--color-error)') }}>
+                                  {vacantCount} vacant
+                                </span>
+                              </div>
+                              <div className="coach-tab-progress-container" title={`${vacantCount} of ${totalCapacity} berths vacant (${vacantPct}%)`}>
+                                <div 
+                                  className={`coach-tab-progress-bar ${progressColorClass}`} 
+                                  style={{ width: `${vacantPct}%` }}
+                                ></div>
+                              </div>
                             </div>
                           );
                         })}
@@ -388,6 +471,9 @@ export default function VacancyDashboard({
                           boarding={searchParams.from}
                           destination={searchParams.to}
                           pnrProfile={pnrProfile && pnrProfile.trainNo === train.number ? pnrProfile : null}
+                          onBookSeat={onBookSeat}
+                          trainNo={train.number}
+                          trainName={train.name}
                         />
                       )}
                     </>
@@ -415,6 +501,7 @@ export default function VacancyDashboard({
             selectedClass={selectedClass} 
             boarding={searchParams.from} 
             destination={searchParams.to} 
+            onBookSeat={onBookSeat}
           />
         </div>
       )}

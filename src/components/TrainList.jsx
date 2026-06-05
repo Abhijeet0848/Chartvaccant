@@ -1,85 +1,98 @@
 // src/components/TrainList.jsx
 import React from 'react';
-import { Train, Clock, CheckSquare, Square, Info } from 'lucide-react';
+import { Train, Clock, Info } from 'lucide-react';
 
-export default function TrainList({ trains, selectedTrainNumbers, onToggleSelectTrain, onSelectAll, onDeselectAll }) {
+export default function TrainList({ trains, selectedTrainNumbers, onToggleSelectTrain, onSelectAll, onDeselectAll, vacanciesByTrain = {} }) {
   if (trains.length === 0) {
     return (
-      <div className="card-glass empty-state">
+      <div className="empty-state">
         <Info size={40} className="empty-icon" />
-        <div className="empty-title">No Trains Found</div>
+        <div className="empty-title">No Departures Found</div>
         <p>There are no scheduled trains for the selected route and date. Try selecting stations like NDLS to HWH or SBC to MAS.</p>
       </div>
     );
   }
 
-  const allSelected = selectedTrainNumbers.length === trains.length;
-
   return (
-    <div className="sidebar-panel">
-      <div className="card-glass" style={{ padding: '1.25rem' }}>
-        <h3 style={{ fontSize: '1.1rem', marginBottom: '0.75rem', fontFamily: 'var(--font-display)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <span>Trains on Route ({trains.length})</span>
-          <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-            {selectedTrainNumbers.length} selected
-          </span>
-        </h3>
-        
-        <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
+    <div className="train-schedule-slider">
+      <div className="train-schedule-header">
+        <div className="train-schedule-title">
+          <Train size={18} className="logo-icon" />
+          <span>Departures Schedule ({trains.length} Trains)</span>
+        </div>
+        <div className="train-schedule-controls">
           <button 
             type="button" 
-            className="btn-secondary" 
-            style={{ padding: '0.35rem 0.6rem', fontSize: '0.8rem', flex: 1 }}
+            className="filter-pill" 
+            style={{ fontSize: '0.75rem', padding: '0.25rem 0.75rem' }}
             onClick={onSelectAll}
           >
             Select All
           </button>
           <button 
             type="button" 
-            className="btn-secondary" 
-            style={{ padding: '0.35rem 0.6rem', fontSize: '0.8rem', flex: 1 }}
+            className="filter-pill" 
+            style={{ fontSize: '0.75rem', padding: '0.25rem 0.75rem' }}
             onClick={onDeselectAll}
           >
-            Deselect All
+            Clear Selected
           </button>
         </div>
+      </div>
 
-        <div className="train-list-scroll-container">
-          {trains.map((train) => {
-            const isSelected = selectedTrainNumbers.includes(train.number);
-            return (
-              <div 
-                key={train.number} 
-                className={`train-card ${isSelected ? 'selected' : ''}`}
-                onClick={() => onToggleSelectTrain(train.number)}
-              >
-                <div className="train-header">
-                  <span className="train-num">{train.number}</span>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <span style={{ fontSize: '0.75rem', padding: '0.1rem 0.35rem', background: 'rgba(255,255,255,0.06)', borderRadius: '4px', color: 'var(--text-secondary)' }}>
-                      {train.classes.join(', ')}
-                    </span>
-                    {isSelected ? (
-                      <CheckSquare size={16} style={{ color: 'var(--accent-secondary)' }} />
-                    ) : (
-                      <Square size={16} style={{ color: 'var(--text-muted)' }} />
-                    )}
-                  </div>
-                </div>
-                
-                <span className="train-name">{train.name}</span>
-                
-                <div className="train-times">
-                  <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                    <Clock size={12} /> {train.depTime}
-                  </span>
-                  <span style={{ color: 'var(--text-muted)' }}>{train.duration}</span>
-                  <span>{train.arrTime}</span>
-                </div>
+      <div className="train-timeline-container">
+        {trains.map((train) => {
+          const isSelected = selectedTrainNumbers.includes(train.number);
+          
+          // Calculate vacancy count if available
+          const trainVacancy = vacanciesByTrain[train.number];
+          const vacancyData = trainVacancy?.data;
+          const vacantCount = vacancyData?.vacantBerths?.length;
+          
+          let vacancyLabel = 'Get Chart';
+          let vacancyClass = 'check';
+          
+          if (trainVacancy) {
+            if (trainVacancy.error) {
+              vacancyLabel = 'Error';
+              vacancyClass = 'none';
+            } else if (vacancyData && vacancyData.coaches && vacancyData.coaches.length > 0) {
+              vacancyLabel = `${vacantCount} Vacant`;
+              vacancyClass = vacantCount > 15 ? 'high' : (vacantCount > 0 ? 'low' : 'none');
+            } else {
+              vacancyLabel = 'Not Prepared';
+              vacancyClass = 'none';
+            }
+          }
+
+          return (
+            <div 
+              key={train.number} 
+              className={`train-ticket-card ${isSelected ? 'selected' : ''}`}
+              onClick={() => onToggleSelectTrain(train.number)}
+            >
+              <div className="train-card-meta">
+                <span className="train-ticket-num">{train.number}</span>
+                <span className={`train-ticket-vacancy ${vacancyClass}`}>
+                  {vacancyLabel}
+                </span>
               </div>
-            );
-          })}
-        </div>
+              
+              <div className="train-ticket-name">{train.name}</div>
+              
+              <div className="train-ticket-route">
+                <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                  <Clock size={12} style={{ color: 'var(--accent-primary)' }} /> {train.depTime}
+                </span>
+                <span>{train.arrTime}</span>
+              </div>
+              
+              <div className="train-ticket-duration">
+                Duration: {train.duration} | {train.classes.join(', ')}
+              </div>
+            </div>
+          );
+        })}
       </div>
     </div>
   );

@@ -304,12 +304,12 @@ function getVacancy(trainNo, boarding, destination, classCode, dateStr) {
 
   const config = COACH_CONFIGS[classCode] || COACH_CONFIGS['3A'];
   
-  // Determine how many coaches (e.g. S1-S5, B1-B4, etc)
+  // Determine how many coaches (e.g. S1-S8, B1-B10, A1-A5, H1-H2, etc)
   let coachCount = 3;
-  if (classCode === 'SL') coachCount = 5;
-  if (classCode === '3A') coachCount = 4;
-  if (classCode === '2A') coachCount = 2;
-  if (classCode === '1A') coachCount = 1;
+  if (classCode === 'SL') coachCount = 8;
+  if (classCode === '3A') coachCount = 10;
+  if (classCode === '2A') coachCount = 5;
+  if (classCode === '1A') coachCount = 2;
 
   const coaches = [];
   const vacantBerths = [];
@@ -401,6 +401,7 @@ function getVacancy(trainNo, boarding, destination, classCode, dateStr) {
 
 export {
   STATIONS,
+  PREDEFINED_TRAINS,
   getStations,
   getTrainsBetween,
   getVacancy
