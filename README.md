@@ -68,7 +68,7 @@ irctc/
 Installation & Setup
 Prerequisites
 Node.js (v18+ recommended)
-MongoDB running locally (`mongodb://localhost:27017/irctc`)
+MongoDB running locally 
 
 Install Dependencies
 npm install
